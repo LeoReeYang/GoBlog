@@ -20,6 +20,7 @@ var (
 
 func init() {
 	file, err := ini.Load("config/config.ini")
+
 	if err != nil {
 		log.Fatalf("can't open config file,go and check err: %s", err)
 	}
@@ -27,7 +28,6 @@ func init() {
 	LoadServer(file)
 
 	LoadDataBase(file)
-
 }
 
 func LoadServer(file *ini.File) {
