@@ -112,7 +112,6 @@ func DeleteUser(id int) int {
 
 func (u *User) BeforeSave(db *gorm.DB) (err error) {
 	u.Password = ScryptPassword(u.Password)
-	log.Fatal(u.Password)
 
 	return
 }
@@ -120,7 +119,7 @@ func (u *User) BeforeSave(db *gorm.DB) (err error) {
 func ScryptPassword(password string) string {
 	salt := []byte{12, 22, 57, 23, 15, 64, 2, 9}
 
-	HashPassword, err := scrypt.Key([]byte(password), salt, 16384, 1<<15, 1, KeyLen)
+	HashPassword, err := scrypt.Key([]byte(password), salt, 16384, 8, 1, KeyLen)
 
 	if err != nil {
 		log.Fatal(err)
