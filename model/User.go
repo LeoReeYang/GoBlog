@@ -1,7 +1,11 @@
 package model
 
 import (
-	"github.com/LeoReeYang/GoBlog/utils/error"
+	"encoding/base64"
+	"log"
+
+	"github.com/LeoReeYang/GoBlog/utils/errors"
+	"golang.org/x/crypto/scrypt"
 	"gorm.io/gorm"
 )
 
@@ -9,8 +13,10 @@ type User struct {
 	gorm.Model
 	Name     string `gorm:"type:varchar(20);not null" json:"name"`
 	Password string `gorm:"type:varchar(20);not null" json:"password"`
-	Role     int    `gorm:"type:int;default:2" json:"role"`
+	Role     int    `gorm:"type:int" json:"role"`
 }
+
+const KeyLen = 10
 
 // check User wheather exsit
 func CheckUserExsit(username string) (errorCode int) {
@@ -19,35 +25,35 @@ func CheckUserExsit(username string) (errorCode int) {
 	db.Where("name = ?", username).First(&user)
 
 	if user.Name == "" {
-		return error.ERROR_USER_NOTEXSIT
+		return errors.ERROR_USER_NOTEXSIT
 	}
 
-	return error.ERROR_USER_EXSIT
+	return errors.ERROR_USER_EXSIT
 }
 
-func AddUser(user *User) (errorCode int) {
+func AddUser(user *User) int {
 
-	if errcode := CheckUserExsit(user.Name); errcode == error.ERROR_USER_EXSIT {
+	if errcode := CheckUserExsit(user.Name); errcode == errors.ERROR_USER_EXSIT {
 		return errcode
 	}
 
 	db.Create(user)
-	return error.SUCCESS
+	return errors.SUCCESS
 }
 
 func EditUser(id int, data *User) int {
 	var user User
 	maps := make(map[string]interface{})
 
-	maps["username"] = data.Name
+	maps["name"] = data.Name
 	maps["role"] = data.Role
 
 	err := db.Model(&user).Where("id = ?", id).Updates(maps).Error
 
 	if err != nil {
-		return error.ERROR
+		return errors.ERROR
 	}
-	return error.SUCCESS
+	return errors.SUCCESS
 }
 
 func GetUser(id int) (User, int) {
@@ -56,9 +62,9 @@ func GetUser(id int) (User, int) {
 	err := db.Limit(1).Where("id = ?", id).Find(&user).Error
 
 	if err != nil {
-		return user, error.ERROR
+		return user, errors.ERROR
 	}
-	return user, error.SUCCESS
+	return user, errors.SUCCESS
 }
 
 func GetUsers(pageSize int, pageNum int) ([]User, int64) {
@@ -74,8 +80,19 @@ func GetUsers(pageSize int, pageNum int) ([]User, int64) {
 	// 	).Count(&total)
 	// 	return users, total
 	// }
+	var offset int
 
-	db.Select("id,username,role,created_at").Limit(pageSize).Offset((pageNum - 1) * pageSize).Find(&users)
+	if pageSize == 0 {
+		pageSize = -1
+	}
+
+	if pageNum == 0 {
+		offset = -1
+	} else {
+		offset = (pageNum - 1) * pageSize
+	}
+
+	db.Select("name,password,role,created_at,updated_at").Limit(pageSize).Offset(offset).Find(&users)
 	db.Model(&users).Count(&total)
 
 	if err != nil {
@@ -88,7 +105,26 @@ func DeleteUser(id int) int {
 	var user User
 	err := db.Where("id = ?", id).Delete(&user).Error
 	if err != nil {
-		return error.ERROR
+		return errors.ERROR
 	}
-	return error.SUCCESS
+	return errors.SUCCESS
+}
+
+func (u *User) BeforeSave(db *gorm.DB) (err error) {
+	u.Password = ScryptPassword(u.Password)
+	log.Fatal(u.Password)
+
+	return
+}
+
+func ScryptPassword(password string) string {
+	salt := []byte{12, 22, 57, 23, 15, 64, 2, 9}
+
+	HashPassword, err := scrypt.Key([]byte(password), salt, 16384, 1<<15, 1, KeyLen)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	return base64.StdEncoding.EncodeToString(HashPassword)
 }

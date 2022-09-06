@@ -28,7 +28,7 @@ func init() {
 		// DeleteUser
 		router.DELETE("user/:id", v1.DeleteUser)
 		// ExsitUser
-		router.GET("users", v1.EditUser)
+		router.GET("users", v1.GetUsers)
 		//EditUser
 		router.PUT("user/:id", v1.EditUser)
 	}
