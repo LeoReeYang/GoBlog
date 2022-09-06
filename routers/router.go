@@ -11,11 +11,12 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func InitRouter() {
+func init() {
 	gin.SetMode(utils.AppMode)
 	r := gin.Default()
 	router := r.Group("api/v1")
 	{
+		// hello test
 		router.GET("hello", func(ctx *gin.Context) {
 			ctx.JSON(http.StatusOK, gin.H{
 				"msg": "hello,world",

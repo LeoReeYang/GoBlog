@@ -1,11 +1,11 @@
 package error
 
 const (
-	SUCCSE = 200
-	ERROR  = 500
+	SUCCESS = 200
+	ERROR   = 500
 
-	ERROR_USERNAME_EXSIT = 1001
-	ERROR_PASSWORD_WRONG = 1002
+	ERROR_USER_EXSIT     = 1001
+	ERROR_WRONG_PASSWORD = 1002
 	ERROR_USER_NOTEXSIT  = 1003
 
 	ERROR_TOKEN_EXSIT    = 1004
@@ -14,15 +14,15 @@ const (
 	ERROR_TOKEN_DISMATCH = 1007
 )
 
-var errorCodeToMsg = map[uint16]string{
-	SUCCSE: "OK",
-	ERROR:  "FAiL",
+var errorCodeToMsg = map[int]string{
+	SUCCESS: "OK",
+	ERROR:   "FAIL",
 
-	ERROR_USERNAME_EXSIT: "Username already exists!",
-	ERROR_PASSWORD_WRONG: "Wrong password!",
+	ERROR_USER_EXSIT:     "User already exists!",
+	ERROR_WRONG_PASSWORD: "Wrong password!",
 	ERROR_USER_NOTEXSIT:  "User not exist!",
 }
 
-func ErrMsg(errCode uint16) string {
+func ErrMsg(errCode int) string {
 	return errorCodeToMsg[errCode]
 }

@@ -2,7 +2,6 @@ package model
 
 import (
 	"fmt"
-	"log"
 	"time"
 
 	"github.com/LeoReeYang/GoBlog/utils"
@@ -17,20 +16,19 @@ var err error
 var dsn = fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8mb4&parseTime=True&loc=Local",
 	utils.DBUser, utils.DBPassWords, utils.DBHost, utils.DBPort, utils.DBName)
 
-func InitDB() {
+func init() {
 	db, err = gorm.Open(mysql.Open(dsn), &gorm.Config{})
 
 	if err != nil {
 		panic("failed to connect database")
 	}
 
-	db.AutoMigrate(&User{}, &Categroy{}, &Article{})
+	// db.Migrator().DropColumn(&User{}, "username")
+	// db.Migrator().RenameColumn(&User{}, "name", "name1")
+	// db.Migrator().DropTable(&User{})
+	// db.AutoMigrate(&User{}, &Categroy{}, &Article{})
 
-	sqlDB, err := db.DB()
-
-	if err != nil {
-		log.Fatal(err)
-	}
+	sqlDB, _ := db.DB()
 
 	sqlDB.SetConnMaxLifetime(time.Hour)
 	sqlDB.SetMaxOpenConns(100)
