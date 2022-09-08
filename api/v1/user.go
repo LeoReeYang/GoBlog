@@ -5,12 +5,12 @@ import (
 	"strconv"
 
 	"github.com/LeoReeYang/GoBlog/model"
-	"github.com/LeoReeYang/GoBlog/utils/errors"
+	"github.com/LeoReeYang/GoBlog/utils/errormsg"
 	"github.com/gin-gonic/gin"
 )
 
 // UserExit
-func UserExit(ctx *gin.Context) {
+func UserExsit(ctx *gin.Context) {
 
 }
 
@@ -28,7 +28,7 @@ func AddUser(ctx *gin.Context) {
 	code := model.AddUser(&user)
 
 	ctx.JSON(http.StatusOK, gin.H{
-		"status": errors.ErrMsg(code),
+		"status": errormsg.ErrMsg(code),
 		"user":   user,
 	})
 
@@ -43,18 +43,10 @@ func GetUsers(ctx *gin.Context) {
 	pageSize, _ := strconv.Atoi(ctx.Query("pageSize"))
 	pageNum, _ := strconv.Atoi(ctx.Query("pageNum"))
 
-	if pageSize == 0 {
-		pageSize = -1
-	}
-
-	if pageNum == 0 {
-		pageNum = 1
-	}
-
 	data, total := model.GetUsers(pageSize, pageNum)
 
 	ctx.JSON(http.StatusOK, gin.H{
-		"status": errors.SUCCESS,
+		"status": errormsg.SUCCESS,
 		"data":   data,
 		"total":  total,
 	})

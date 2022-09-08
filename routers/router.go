@@ -27,10 +27,11 @@ func init() {
 		router.POST("user/add", v1.AddUser)
 		// DeleteUser
 		router.DELETE("user/:id", v1.DeleteUser)
-		// ExsitUser
+		// GetUsers
 		router.GET("users", v1.GetUsers)
-		//EditUser
+		// EditUser
 		router.PUT("user/:id", v1.EditUser)
+		//
 	}
 
 	r.Run(utils.HttpPort)
