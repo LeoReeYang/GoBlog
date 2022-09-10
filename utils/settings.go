@@ -16,10 +16,11 @@ var (
 	DBUser      string
 	DBPassWords string
 	DBName      string
+	JWTKey      string
 )
 
 func init() {
-	file, err := ini.Load("../config/config.ini")
+	file, err := ini.Load("config/config.ini")
 
 	if err != nil {
 		log.Fatalf("can't open config file,go and check err: %s", err)
@@ -33,6 +34,7 @@ func init() {
 func LoadServer(file *ini.File) {
 	AppMode = file.Section("server").Key("AppMode").MustString("debug")
 	HttpPort = file.Section("server").Key("HttpPort").MustString("3000")
+	JWTKey = file.Section("server").Key("JWTKey").MustString("cyisgod")
 }
 
 func LoadDataBase(file *ini.File) {

@@ -9,11 +9,6 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// UserExit
-func UserExsit(ctx *gin.Context) {
-
-}
-
 // EditUser
 func EditUser(ctx *gin.Context) {
 
@@ -22,7 +17,6 @@ func EditUser(ctx *gin.Context) {
 // AddUser
 func AddUser(ctx *gin.Context) {
 	var user model.User
-
 	ctx.ShouldBindJSON(&user)
 
 	code := model.AddUser(&user)
@@ -31,12 +25,12 @@ func AddUser(ctx *gin.Context) {
 		"status": errormsg.ErrMsg(code),
 		"user":   user,
 	})
-
 }
 
 // DeleteUser
 func DeleteUser(ctx *gin.Context) {
-
+	id, _ := strconv.Atoi(ctx.Query("id"))
+	model.DeleteUser(id)
 }
 
 func GetUsers(ctx *gin.Context) {
@@ -49,5 +43,16 @@ func GetUsers(ctx *gin.Context) {
 		"status": errormsg.SUCCESS,
 		"data":   data,
 		"total":  total,
+	})
+}
+
+func GetUser(ctx *gin.Context) {
+	id, _ := strconv.Atoi(ctx.Query("id"))
+
+	user, code := model.GetUser(id)
+
+	ctx.JSON(http.StatusOK, gin.H{
+		"status": errormsg.ErrMsg(code),
+		"data":   user,
 	})
 }

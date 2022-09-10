@@ -12,6 +12,4 @@ func main() {
 	// model.Initdb()
 	//initialize Routers
 	// routers.InitRouters()
-
-	// fmt.Println(ScryptPassword1("123456"))
 }

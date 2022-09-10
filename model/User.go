@@ -2,9 +2,10 @@ package model
 
 import (
 	"encoding/base64"
+	"errors"
 	"log"
 
-	errors "github.com/LeoReeYang/GoBlog/utils/errormsg"
+	errormsg "github.com/LeoReeYang/GoBlog/utils/errormsg"
 	"golang.org/x/crypto/scrypt"
 	"gorm.io/gorm"
 )
@@ -18,27 +19,26 @@ type User struct {
 
 const KeyLen = 10
 
-// check User wheather exsit
-func CheckUserExsit(name string) (errorCode int) {
+func CheckUserExist(name string) (errorCode int) {
 	var user User
 
 	db.Where("name = ?", name).First(&user)
 
 	if user.Name == "" {
-		return errors.ERROR_USER_NOTEXSIT
+		return errormsg.ERROR_USER_NOTEXIST
 	}
 
-	return errors.ERROR_USER_EXSIT
+	return errormsg.ERROR_USER_EXIST
 }
 
 func AddUser(user *User) int {
 
-	if errcode := CheckUserExsit(user.Name); errcode == errors.ERROR_USER_EXSIT {
+	if errcode := CheckUserExist(user.Name); errcode == errormsg.ERROR_USER_EXIST {
 		return errcode
 	}
 
 	db.Create(user)
-	return errors.SUCCESS
+	return errormsg.SUCCESS
 }
 
 func EditUser(id int, data *User) int {
@@ -51,21 +51,23 @@ func EditUser(id int, data *User) int {
 	err := db.Model(&user).Where("id = ?", id).Updates(info).Error
 
 	if err != nil {
-		return errors.ERROR
+		return errormsg.ERROR
 	}
-	return errors.SUCCESS
+	return errormsg.SUCCESS
 }
 
 func GetUser(id int) (User, int) {
-	// var user User
+	var user User
+	var errcode = errormsg.SUCCESS
 
 	// err := db.Limit(1).Where("id = ?", id).Find(&user).Error
 	// result := db.First(&user, id)
+	db.Model(&User{}).First(&user, id)
 
-	// if errors.Is(result.Error, gorm.ErrRecordNotFound) {
-	// 	return user, errors.ERROR
-	// }
-	// return user, errors.SUCCESS
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		errcode = errormsg.ERROR_USER_NOTEXIST
+	}
+	return user, errcode
 }
 
 func GetUsers(pageSize int, pageNum int) ([]User, int64) {
@@ -84,7 +86,7 @@ func GetUsers(pageSize int, pageNum int) ([]User, int64) {
 		offset = (pageNum - 1) * pageSize
 	}
 
-	db.Select("name,password,role,created_at,updated_at").Limit(pageSize).Offset(offset).Find(&users)
+	db.Select("name,role,created_at,updated_at").Limit(pageSize).Offset(offset).Find(&users)
 	db.Model(&users).Count(&total)
 
 	if err != nil {
@@ -95,27 +97,24 @@ func GetUsers(pageSize int, pageNum int) ([]User, int64) {
 
 func DeleteUser(id int) int {
 	var user User
-	err := db.Where("id = ?", id).Delete(&user).Error
-	if err != nil {
-		return errors.ERROR
+	if err := db.Delete(&user, id).Error; err != nil {
+		return errormsg.ERROR
 	}
-	return errors.SUCCESS
+	return errormsg.SUCCESS
 }
 
 func (u *User) BeforeSave(db *gorm.DB) (err error) {
 	u.Password = ScryptPassword(u.Password)
-
 	return nil
 }
 
 func ScryptPassword(password string) string {
 	salt := []byte{12, 22, 57, 23, 15, 64, 2, 9}
 
-	HashPassword, err := scrypt.Key([]byte(password), salt, 16384, 8, 1, KeyLen)
+	hashPassword, err := scrypt.Key([]byte(password), salt, 16384, 8, 1, KeyLen)
 
 	if err != nil {
 		log.Fatal(err)
 	}
-
-	return base64.StdEncoding.EncodeToString(HashPassword)
+	return base64.StdEncoding.EncodeToString(hashPassword)
 }
