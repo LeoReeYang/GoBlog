@@ -11,7 +11,15 @@ import (
 
 // EditUser
 func EditUser(ctx *gin.Context) {
+	id, _ := strconv.Atoi(ctx.Query("id"))
+	var user model.User
+	ctx.ShouldBindJSON(&user)
 
+	code := model.EditUser(id, &user)
+	ctx.JSON(http.StatusOK, gin.H{
+		"status": errormsg.ErrMsg(code),
+		"user":   user,
+	})
 }
 
 // AddUser
@@ -53,6 +61,19 @@ func GetUser(ctx *gin.Context) {
 
 	ctx.JSON(http.StatusOK, gin.H{
 		"status": errormsg.ErrMsg(code),
+		"data":   user,
+	})
+}
+
+func EditPassword(ctx *gin.Context) {
+	id, _ := strconv.Atoi(ctx.Query("id"))
+	var user model.User
+	ctx.ShouldBindJSON(&user)
+
+	code := model.EditPassword(id, &user)
+
+	ctx.JSON(http.StatusOK, gin.H{
+		"status": code,
 		"data":   user,
 	})
 }

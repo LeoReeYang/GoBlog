@@ -59,7 +59,7 @@ func GetSameCategoryArticleList(CategoryID int, pageSize int, pageNum int) ([]Ar
 		offset = (pageNum - 1) * pageSize
 	}
 
-	db.Preload("Category").Select("title,category_id,content,created_at,updated_at").Limit(pageSize).Offset(offset).Where("category_id = ?", CategoryID).Find(&ArticleList)
+	db.Preload("Category").Select("title,category_id,content,created_at,updated_at").Limit(pageSize).Offset(offset).Find(&ArticleList, "category_id = ?", CategoryID)
 
 	db.Model(&ArticleList).Where("category_id = ?", CategoryID).Count(&total)
 

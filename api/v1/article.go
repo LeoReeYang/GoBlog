@@ -63,7 +63,6 @@ func EditArticle(ctx *gin.Context) {
 	id, _ := strconv.Atoi(ctx.Query("id"))
 
 	var article model.Article
-
 	ctx.ShouldBindJSON(&article)
 
 	code := model.EditArticle(id, &article)

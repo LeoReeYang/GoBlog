@@ -4,6 +4,7 @@ import (
 	"errors"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/LeoReeYang/GoBlog/utils"
 	"github.com/LeoReeYang/GoBlog/utils/errormsg"
@@ -13,26 +14,44 @@ import (
 
 type MyClaims struct {
 	Username string `json:"username"`
-	jwt.StandardClaims
+	jwt.RegisteredClaims
 }
 
 // 定义错误
 var (
-	errTokenHasExpired  = errors.New("token已过期,请重新登录")
-	errTokenNotValidYet = errors.New("token无效,请重新登录")
-	errTokenMalformed   = errors.New("token不正确,请重新登录")
-	errTokenInvalid     = errors.New("这不是一个token,请重新登录")
+	errTokenHasExpired  = errors.New("Token Expired")
+	errTokenNotValidYet = errors.New("Token Invalid Yet")
+	errTokenMalformed   = errors.New("Token Malformed")
+	errTokenInvalid     = errors.New("Token Invalid")
 )
+
+func SetToken(username string) (string, int) {
+	expirationTime := time.Now().Add(30 * time.Minute)
+
+	claims := &MyClaims{
+		Username: username,
+		RegisteredClaims: jwt.RegisteredClaims{
+			ExpiresAt: jwt.NewNumericDate(expirationTime),
+		},
+	}
+
+	tokenstring, err := CreateToken(*claims)
+	if err != nil {
+		return "", errormsg.ERROR
+	}
+	return tokenstring, errormsg.SUCCESS
+}
 
 func CreateToken(claims MyClaims) (string, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	return token.SignedString(utils.JWTKey)
+	// SignedString need a []byte ,not a string
+	return token.SignedString([]byte(utils.JWTKey))
 }
 
 func ParseToken(tokenString string) (*MyClaims, error) {
-
+	// ParseWithClaims need a []byte ,not a string
 	token, err := jwt.ParseWithClaims(tokenString, &MyClaims{}, func(t *jwt.Token) (interface{}, error) {
-		return utils.JWTKey, nil
+		return []byte(utils.JWTKey), nil
 	})
 
 	if err != nil {
@@ -57,10 +76,9 @@ func ParseToken(tokenString string) (*MyClaims, error) {
 	}
 
 	return nil, errTokenInvalid
-
 }
 
-func jwtToken() gin.HandlerFunc {
+func JwtToken() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		var code int
 		tokenHeader := ctx.Request.Header.Get("Authorization")
@@ -90,7 +108,7 @@ func jwtToken() gin.HandlerFunc {
 			if err == errTokenHasExpired {
 				ctx.JSON(http.StatusOK, gin.H{
 					"status":  errormsg.ERROR,
-					"message": "token授权已过期,请重新登录",
+					"message": errTokenHasExpired,
 					"data":    nil,
 				})
 				ctx.Abort()

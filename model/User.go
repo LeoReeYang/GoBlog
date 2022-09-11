@@ -1,19 +1,18 @@
 package model
 
 import (
-	"encoding/base64"
 	"errors"
 	"log"
 
 	errormsg "github.com/LeoReeYang/GoBlog/utils/errormsg"
-	"golang.org/x/crypto/scrypt"
+	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
 )
 
 type User struct {
 	gorm.Model
 	Name     string `gorm:"type:varchar(20);not null" json:"name"`
-	Password string `gorm:"type:varchar(20);not null" json:"password"`
+	Password string `gorm:"type:varchar(100);not null" json:"password"`
 	Role     int    `gorm:"type:int" json:"role"`
 }
 
@@ -24,7 +23,7 @@ func CheckUserExist(name string) (errorCode int) {
 
 	db.Where("name = ?", name).First(&user)
 
-	if user.Name == "" {
+	if user.ID == 0 {
 		return errormsg.ERROR_USER_NOTEXIST
 	}
 
@@ -43,12 +42,12 @@ func AddUser(user *User) int {
 
 func EditUser(id int, data *User) int {
 	var user User
-	info := make(map[string]interface{})
+	infos := make(map[string]interface{})
 
-	info["name"] = data.Name
-	info["role"] = data.Role
+	infos["name"] = data.Name
+	infos["role"] = data.Role
 
-	err := db.Model(&user).Where("id = ?", id).Updates(info).Error
+	err := db.Model(&user).Where("id = ?", id).Updates(infos).Error
 
 	if err != nil {
 		return errormsg.ERROR
@@ -60,8 +59,6 @@ func GetUser(id int) (User, int) {
 	var user User
 	var errcode = errormsg.SUCCESS
 
-	// err := db.Limit(1).Where("id = ?", id).Find(&user).Error
-	// result := db.First(&user, id)
 	db.Model(&User{}).First(&user, id)
 
 	if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -103,18 +100,68 @@ func DeleteUser(id int) int {
 	return errormsg.SUCCESS
 }
 
+func EditPassword(id int, user *User) int {
+	err = db.Select("password").Where("id = ?", id).Updates(&user).Error
+	if err != nil {
+		return errormsg.ERROR
+	}
+	return errormsg.SUCCESS
+}
+
 func (u *User) BeforeSave(db *gorm.DB) (err error) {
+	u.Password = ScryptPassword(u.Password)
+	u.Role = 1
+	return nil
+}
+
+func (u *User) BeforeUpdate(db *gorm.DB) (err error) {
 	u.Password = ScryptPassword(u.Password)
 	return nil
 }
 
 func ScryptPassword(password string) string {
-	salt := []byte{12, 22, 57, 23, 15, 64, 2, 9}
+	// salt := []byte{12, 22, 57, 23, 15, 64, 2, 9}
 
-	hashPassword, err := scrypt.Key([]byte(password), salt, 16384, 8, 1, KeyLen)
-
+	// hashPassword, err := scrypt.Key([]byte(password), salt, 16384, 8, 1, KeyLen)
+	hashPassword, err := bcrypt.GenerateFromPassword([]byte(password), 10)
 	if err != nil {
 		log.Fatal(err)
 	}
-	return base64.StdEncoding.EncodeToString(hashPassword)
+	// return base64.StdEncoding.EncodeToString(hashPassword)
+	return string(hashPassword)
+}
+
+func UserLogin(name string, password string) int {
+	var user User
+
+	db.First(&user, "name = ?", name)
+
+	passwordErr := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password))
+
+	if user.ID == 0 {
+		return errormsg.ERROR_USER_NOTEXIST
+	} else if passwordErr != nil {
+		// user.Password = user.Password + " " + password
+		return errormsg.ERROR_WRONG_PASSWORD
+	} else if user.Role != 1 {
+		return errormsg.ERROR_NO_PERMISSION
+	}
+
+	return errormsg.SUCCESS
+}
+
+func AdminLogin(name string, password string) (User, int) {
+	var user User
+	var PasswordErr error
+
+	db.First(&user, "name = ?", name)
+	PasswordErr = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password))
+
+	if user.ID == 0 {
+		return user, errormsg.ERROR_USER_NOTEXIST
+	} else if PasswordErr != nil {
+		return user, errormsg.ERROR_WRONG_PASSWORD
+	}
+
+	return user, errormsg.SUCCESS
 }

@@ -4,6 +4,7 @@ package routers
 
 import (
 	v1 "github.com/LeoReeYang/GoBlog/api/v1"
+	"github.com/LeoReeYang/GoBlog/middleware"
 	"github.com/LeoReeYang/GoBlog/utils"
 
 	"github.com/gin-gonic/gin"
@@ -12,55 +13,53 @@ import (
 func init() {
 	gin.SetMode(utils.AppMode)
 	r := gin.Default()
-	router := r.Group("api/v1")
+
+	withAuthorization := r.Group("api/v1")
+	withAuthorization.Use(middleware.JwtToken())
 	{
-		// AddUser
-		router.POST("user/add", v1.AddUser)
 		// DeleteUser
-		router.DELETE("user/delete", v1.DeleteUser)
-		// GetUsers
-		router.GET("users", v1.GetUsers)
+		withAuthorization.DELETE("user/delete", v1.DeleteUser)
 		// EditUser
-		router.PUT("user/:id", v1.EditUser)
-		// GetUser
-		router.GET("user", v1.GetUser)
+		withAuthorization.PUT("user/:id", v1.EditUser)
+		// EditPassword
+		withAuthorization.POST("user/editpassword", v1.EditPassword)
 
 		// AddCategory
-		router.POST("category/add", v1.AddCategory)
+		withAuthorization.POST("category/add", v1.AddCategory)
 		// DeleteCategory
-		router.DELETE("category/delete", v1.DeleteCategory)
-		// GetCategorys
-		router.GET("categorys", v1.GetCategoryList)
-		// GetCategory
-		router.GET("category", v1.GetCategory)
+		withAuthorization.DELETE("category/delete", v1.DeleteCategory)
 		// EditCategory
-		router.POST("category/edit", v1.EditCategory)
+		withAuthorization.POST("category/edit", v1.EditCategory)
 
 		// AddArticle
-		router.POST("article/add", v1.AddArticle)
+		withAuthorization.POST("article/add", v1.AddArticle)
 		// DeleteArticle
-		router.DELETE("article/delete", v1.DeleteArticle)
-		// GetArticles
-		router.GET("articles", v1.GetSameCategoryArticleList)
+		withAuthorization.DELETE("article/delete", v1.DeleteArticle)
+		// EditAticle
+		withAuthorization.PUT("article/edit", v1.EditArticle)
+	}
+	router := r.Group("api/v1")
+	{
+		// GetUser
+		router.GET("user", v1.GetUser)
+		// AddUser
+		router.POST("user/add", v1.AddUser)
+		// GetUsers
+		router.GET("users", v1.GetUsers)
+
+		// Login
+		router.POST("login", v1.UserLogin)
+
+		// GetCategory
+		router.GET("category", v1.GetCategory)
+		// GetCategorys
+		router.GET("categorys", v1.GetCategoryList)
+
 		// GetArticle
 		router.GET("article", v1.GetArticle)
-		// EditAticle
-		router.PUT("article/edit", v1.EditArticle)
+		// GetArticles
+		router.GET("articles", v1.GetSameCategoryArticleList)
+
 	}
-
-	// routerUser := r.Group("api/v1/user")
-	// {
-	// 	// AddUser
-	// 	routerUser.POST("add", v1.AddUser)
-	// 	// DeleteUser
-	// 	routerUser.DELETE("delete", v1.DeleteUser)
-	// 	// GetUsers
-	// 	routerUser.GET("users", v1.GetUsers)
-	// 	// EditUser
-	// 	routerUser.PUT(":id", v1.EditUser)
-	// 	// GetUser
-	// 	routerUser.GET("user", v1.GetUser)
-	// }
-
 	r.Run(utils.HttpPort)
 }

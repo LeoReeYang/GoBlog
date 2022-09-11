@@ -26,7 +26,7 @@ func init() {
 	// db.Migrator().DropColumn(&User{}, "username")
 	// db.Migrator().RenameColumn(&User{}, "name", "name1")
 	// db.Migrator().DropTable(&Category{}, &Article{})
-	db.AutoMigrate(&Category{}, &Article{})
+	db.AutoMigrate(&Category{}, &Article{}, &User{})
 	// db.AutoMigrate(&Category{})
 
 	sqlDB, _ := db.DB()
